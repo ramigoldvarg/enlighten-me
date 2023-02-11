@@ -19,7 +19,7 @@ auth.get("/callback", async (req, res) => {
   const client_id = process.env.CLIENT_ID;
   const client_secret = process.env.CLIENT_SECRET;
 
-  const token = await superagent
+  const { body: token } = await superagent
     .post("https://accounts.spotify.com/api/token")
     .send({
       code: code,
@@ -30,9 +30,15 @@ auth.get("/callback", async (req, res) => {
       "Authorization",
       `Basic ${new Buffer(client_id + ":" + client_secret).toString("base64")}`
     )
-    .set("Content-Type", "application/x-www-form-urlencoded");
+    .set("Content-Type", "application/x-www-form-urlencoded")
+    .set("Data-Type", "application/json");
 
-  console.log(token);
+  req.session.token = {
+    accessToken: token.access_token,
+    refreshToken: token.refresh_token,
+  };
+
+  console.log(req.session.token);
 
   return res.json({ message: "got token" });
 });
