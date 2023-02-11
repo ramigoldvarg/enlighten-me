@@ -1,15 +1,20 @@
-import express from "express";
+import express, { json } from "express";
 import * as dotenv from "dotenv";
+import router from "./routes";
+import morgan from "morgan";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
-const port:number = +process.env.PORT!;
+const port: number = +process.env.PORT!;
 
-app.get("/", (req, res) => {
-    return res.json({message: "hello world"});
+app.use(morgan("common"));
+app.use(json());
+app.use(cors());
+
+app.use("/api", router);
+
+app.listen(port, () => {
+  console.log(`Listening on: ${port}`);
 });
-
-app.listen(port, () =>{
-    console.log(`Listening on: ${port}`);
-})
