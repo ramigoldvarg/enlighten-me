@@ -30,7 +30,7 @@ auth.get("/callback", async (req, res) => {
       })
       .set(
         "Authorization",
-        `Basic ${new Buffer(client_id + ":" + client_secret).toString(
+        `Basic ${Buffer.from(client_id + ":" + client_secret).toString(
           "base64"
         )}`
       )
@@ -87,6 +87,11 @@ auth.get("/refreshToken", async (req, res) => {
     console.error(error);
     throw new Error("Couldn't get the token");
   }
+});
+
+auth.get("/logout", (req, res) => {
+  req.session.token = undefined;
+  return res.status(200).send();
 });
 
 export default auth;

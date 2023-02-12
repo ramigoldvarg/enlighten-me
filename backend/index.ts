@@ -21,6 +21,8 @@ app.use(morgan("common"));
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "ramissecretsecret",
+    saveUninitialized: false,
+    resave: true,
   })
 );
 app.use(json());
