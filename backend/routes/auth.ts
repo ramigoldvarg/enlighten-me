@@ -1,5 +1,6 @@
 import { Router } from "express";
 import superagent from "superagent";
+import { SPOTIFY_AUTH_ENDPOINT } from "../utils/config/spotify.config";
 
 const auth: Router = Router();
 
@@ -19,28 +20,73 @@ auth.get("/callback", async (req, res) => {
   const client_id = process.env.CLIENT_ID;
   const client_secret = process.env.CLIENT_SECRET;
 
-  const { body: token } = await superagent
-    .post("https://accounts.spotify.com/api/token")
-    .send({
-      code: code,
-      redirect_uri: redirect_uri,
-      grant_type: "authorization_code",
-    })
-    .set(
-      "Authorization",
-      `Basic ${new Buffer(client_id + ":" + client_secret).toString("base64")}`
-    )
-    .set("Content-Type", "application/x-www-form-urlencoded")
-    .set("Data-Type", "application/json");
+  try {
+    const { body: token } = await superagent
+      .post(SPOTIFY_AUTH_ENDPOINT)
+      .send({
+        code: code,
+        redirect_uri: redirect_uri,
+        grant_type: "authorization_code",
+      })
+      .set(
+        "Authorization",
+        `Basic ${new Buffer(client_id + ":" + client_secret).toString(
+          "base64"
+        )}`
+      )
+      .set("Content-Type", "application/x-www-form-urlencoded")
+      .set("Data-Type", "application/json");
 
-  req.session.token = {
-    accessToken: token.access_token,
-    refreshToken: token.refresh_token,
-  };
+    req.session.token = {
+      accessToken: token.access_token,
+      refreshToken: token.refresh_token,
+    };
 
-  console.log(req.session.token);
+    // TODO: redirect here to the home page
+    return res.json({ message: "got token" });
+  } catch (error) {
+    console.error(error);
+    throw new Error("Couldn't get the token");
+  }
+});
 
-  return res.json({ message: "got token" });
+auth.get("/refreshToken", async (req, res) => {
+  const client_id = process.env.CLIENT_ID;
+  const client_secret = process.env.CLIENT_SECRET;
+
+  if (!req.session.token) {
+    throw new Error("No token present");
+  }
+
+  try {
+    const { body: token } = await superagent
+      .post(SPOTIFY_AUTH_ENDPOINT)
+      .send({
+        refresh_token: req.session.token.refreshToken,
+        grant_type: "refresh_token",
+      })
+      .set(
+        "Authorization",
+        `Basic ${new Buffer(client_id + ":" + client_secret).toString(
+          "base64"
+        )}`
+      )
+      .set("Content-Type", "application/x-www-form-urlencoded")
+      .set("Data-Type", "application/json");
+
+    req.session.token = {
+      accessToken: token.access_token,
+      refreshToken: token.refresh_token,
+    };
+
+    console.log(req.session.token);
+
+    // TODO: redirect here to the original request
+    return res.json({ message: "got token" });
+  } catch (error) {
+    console.error(error);
+    throw new Error("Couldn't get the token");
+  }
 });
 
 export default auth;

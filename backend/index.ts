@@ -4,7 +4,7 @@ import morgan from "morgan";
 import cors from "cors";
 import session from "express-session";
 import router from "./routes";
-import { Token } from "./types/Token";
+import { Token } from "./utils/types/Token";
 
 dotenv.config();
 
